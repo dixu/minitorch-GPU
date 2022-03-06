@@ -297,7 +297,128 @@ def reduce(fn, start=0.0):
     return ret
 
 
+def tensor_matrix_multiply(
+    out,
+    out_shape,
+    out_strides,
+    a_storage,
+    a_shape,
+    a_strides,
+    b_storage,
+    b_shape,
+    b_strides,
+):
+    """
+    NUMBA tensor matrix multiply function.
+    Should work for any tensor shapes that broadcast as long as ::
+        assert a_shape[-1] == b_shape[-2]
+    Optimizations:
+        * Outer loop in parallel
+        * No index buffers or function calls
+        * Inner loop should have no global writes, 1 multiply.
+    Args:
+        out (array): storage for `out` tensor
+        out_shape (array): shape for `out` tensor
+        out_strides (array): strides for `out` tensor
+        a_storage (array): storage for `a` tensor
+        a_shape (array): shape for `a` tensor
+        a_strides (array): strides for `a` tensor
+        b_storage (array): storage for `b` tensor
+        b_shape (array): shape for `b` tensor
+        b_strides (array): strides for `b` tensor
+    Returns:
+        None : Fills in `out`
+    """
+    # a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
+    # b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
+
+    # assert a_shape[-1] == b_shape[-2]
+
+    # for pos in range(out.size):
+    #     if out_strides[-1] == 1:
+    #         row = pos // out_strides[-2]
+    #         col = pos - row * out_strides[-2]
+    #     else:
+    #         col = pos // out_strides[-1]
+    #         row = pos - col * out_strides[-1]
+    #     for i in range(a_shape[-1]):
+    #         a = a_storage[row * a_strides[-2] + i * a_strides[-1]]
+    #         b = b_storage[i * b_strides[-2] + col * b_strides[-1]]
+    #         out[pos] += a * b
+    for n in range(out_shape[0]):
+        for i in range(out_shape[1]):
+            for j in range(out_shape[2]):
+                for k in range(a_shape[-1]):
+                    print(
+                        out_shape,
+                        a_shape,
+                        b_shape,
+                        out_strides,
+                        a_strides,
+                        b_strides,
+                        n,
+                        i,
+                        j,
+                        k,
+                    )
+                    out[
+                        n * out_strides[0] + i * out_strides[1] + j * out_strides[2]
+                    ] += (
+                        a_storage[
+                            n * a_strides[0] + i * a_strides[1] + k * a_strides[2]
+                        ]
+                        * b_storage[
+                            (n * b_strides[0] + k * b_strides[1] + j * b_strides[2])
+                            % len(b_storage)
+                        ]
+                    )
+
+
+def matrix_multiply(a, b):
+    """
+    Batched tensor matrix multiply ::
+        for n:
+          for i:
+            for j:
+              for k:
+                out[n, i, j] += a[n, i, k] * b[n, k, j]
+    Where n indicates an optional broadcasted batched dimension.
+    Should work for tensor shapes of 3 dims ::
+        assert a.shape[-1] == b.shape[-2]
+    Args:
+        a (:class:`Tensor`): tensor data a
+        b (:class:`Tensor`): tensor data b
+    Returns:
+        :class:`Tensor` : new tensor data
+    """
+
+    # Make these always be a 3 dimensional multiply
+    both_2d = 0
+    if len(a.shape) == 2:
+        a = a.contiguous().view(1, a.shape[0], a.shape[1])
+        both_2d += 1
+    if len(b.shape) == 2:
+        b = b.contiguous().view(1, b.shape[0], b.shape[1])
+        both_2d += 1
+    both_2d = both_2d == 2
+
+    ls = list(shape_broadcast(a.shape[:-2], b.shape[:-2]))
+    ls.append(a.shape[-2])
+    ls.append(b.shape[-1])
+    assert a.shape[-1] == b.shape[-2]
+    out = a.zeros(tuple(ls))
+
+    tensor_matrix_multiply(*out.tuple(), *a.tuple(), *b.tuple())
+
+    # Undo 3d if we added it.
+    if both_2d:
+        out = out.view(out.shape[1], out.shape[2])
+    return out
+
+
 class TensorOps:
     map = map
     zip = zip
     reduce = reduce
+    matrix_multiply = matrix_multiply
+    
