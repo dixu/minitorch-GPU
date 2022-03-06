@@ -43,7 +43,17 @@ def tensor_map(fn):
 
     def _map(out, out_shape, out_strides, out_size, in_storage, in_shape, in_strides):
         # TODO: Implement for Task 3.3.
-        raise NotImplementedError('Need to implement for Task 3.3')
+        out_i = numba.cuda.blockIdx.x * THREADS_PER_BLOCK + numba.cuda.threadIdx.x
+        if out_i < out.size:
+            out_index = numba.cuda.local.array(MAX_DIMS, numba.int32)
+            in_index = numba.cuda.local.array(MAX_DIMS, numba.int32)
+            to_index(out_i, out_shape, out_index)
+            broadcast_index(out_index, out_shape, in_shape, in_index)
+            in_position = index_to_position(in_index, in_strides)
+            out_position = index_to_position(out_index, out_strides)
+            out[out_position] = fn(in_storage[in_position])
+
+        #raise NotImplementedError('Need to implement for Task 3.3')
 
     return cuda.jit()(_map)
 
