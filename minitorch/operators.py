@@ -101,7 +101,7 @@ def sigmoid(x):
     if x >= 0:
         return 1.0/(1.0+math.exp(-x))
     else:
-        return exp(x)/(1+math.exp(x))
+        return math.exp(x)/(1+math.exp(x))
     raise NotImplementedError('Need to implement for Task 0.1')
 
 
