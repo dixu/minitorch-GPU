@@ -172,7 +172,26 @@ def _sum_practice(out, a, size):
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    raise NotImplementedError('Need to implement for Task 3.3')
+
+    local_idx = numba.cuda.threadIdx.x
+    block_idx = numba.cuda.blockIdx.x
+    shared_block = numba.cuda.shared.array(BLOCK_DIM, numba.float64)
+    offset = 1
+
+    if block_idx * THREADS_PER_BLOCK + local_idx < size:
+        shared_block[local_idx] = a[block_idx * THREADS_PER_BLOCK + local_idx]
+    else:
+        shared_block[local_idx] = 0
+
+    while offset < BLOCK_DIM:
+        numba.cuda.syncthreads()
+        if local_idx % (offset * 2) == 0:
+            shared_block[local_idx] += shared_block[local_idx + offset]
+        offset *= 2
+
+    out[block_idx] = shared_block[0]
+
+    #raise NotImplementedError('Need to implement for Task 3.3')
 
 
 jit_sum_practice = cuda.jit()(_sum_practice)
