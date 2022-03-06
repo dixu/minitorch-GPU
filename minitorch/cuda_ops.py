@@ -241,7 +241,35 @@ def tensor_reduce(fn):
     ):
         BLOCK_DIM = 1024
         # TODO: Implement for Task 3.3.
-        raise NotImplementedError('Need to implement for Task 3.3')
+        reduce_size = a_shape[reduce_dim]
+        local_idx = numba.cuda.threadIdx.x
+        block_idx = numba.cuda.blockIdx.x
+        shared_block = numba.cuda.shared.array(BLOCK_DIM, numba.float64)
+        offset = 1
+
+        out_index = numba.cuda.local.array(MAX_DIMS, numba.int32)
+        to_index(block_idx, out_shape, out_index)
+        out_position = index_to_position(out_index, out_strides)
+
+        if local_idx < reduce_size:
+            out_index[reduce_dim] = local_idx
+            shared_block[local_idx] = a_storage[index_to_position(out_index, a_strides)]
+        else:
+            shared_block[local_idx] = reduce_value
+
+        while offset < BLOCK_DIM:
+            numba.cuda.syncthreads()
+            if local_idx % (offset * 2) == 0:
+                shared_block[local_idx] = fn(
+                    shared_block[local_idx], shared_block[local_idx + offset]
+                )
+            offset *= 2
+
+        numba.cuda.syncthreads()
+        if local_idx == 0:
+            out[out_position] = shared_block[local_idx]
+
+        #raise NotImplementedError('Need to implement for Task 3.3')
 
     return cuda.jit()(_reduce)
 
