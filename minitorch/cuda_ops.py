@@ -17,7 +17,7 @@ to_index = cuda.jit(device=True)(to_index)
 index_to_position = cuda.jit(device=True)(index_to_position)
 broadcast_index = cuda.jit(device=True)(broadcast_index)
 
-THREADS_PER_BLOCK = 64
+THREADS_PER_BLOCK = 32
 
 
 def tensor_map(fn):
@@ -170,7 +170,7 @@ def _sum_practice(out, a, size):
         size (int):  length of a.
 
     """
-    BLOCK_DIM =64
+    BLOCK_DIM =32
     # TODO: Implement for Task 3.3.
 
     local_idx = numba.cuda.threadIdx.x
@@ -344,7 +344,7 @@ def _mm_practice(out, a, b, size):
         size (int): size of the square
 
     """
-    BLOCK_DIM = 64
+    BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
     shared_a = numba.cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     shared_b = numba.cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
@@ -427,7 +427,7 @@ def tensor_matrix_multiply(
     """
     a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
     b_batch_stride = b_strides[0] if b_shape[0] > 1 else 0
-    BLOCK_DIM = 64
+    BLOCK_DIM = 32
     # TODO: Implement for Task 3.4.
     shared_a = numba.cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
     shared_b = numba.cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
