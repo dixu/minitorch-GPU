@@ -217,9 +217,9 @@ if numba.cuda.is_available():
     @pytest.mark.task3_4
     def test_mul_practice4():
         "Extend to require 2 blocks"
-        size = 28
-        x = [[random.random() for i in range(size)] for j in range(size)]
-        y = [[random.random() for i in range(size)] for j in range(size)]
+        size = 33
+        x = [[random.random() for i in range(size)] for j in range(size-1)]
+        y = [[random.random() for i in range(size-1)] for j in range(size)]
         z = minitorch.tensor(x, backend=shared["fast"]) @ minitorch.tensor(
             y, backend=shared["fast"]
         )
