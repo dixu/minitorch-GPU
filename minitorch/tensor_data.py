@@ -4,7 +4,7 @@ from numpy import array, float64, ndarray
 import numba
 import minitorch
 
-MAX_DIMS = 64
+MAX_DIMS = 32
 
 
 class IndexingError(RuntimeError):
