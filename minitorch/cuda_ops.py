@@ -346,7 +346,26 @@ def _mm_practice(out, a, b, size):
     """
     BLOCK_DIM = 32
     # TODO: Implement for Task 3.3.
-    raise NotImplementedError('Need to implement for Task 3.3')
+    shared_a = numba.cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+    shared_b = numba.cuda.shared.array((BLOCK_DIM, BLOCK_DIM), numba.float64)
+
+    y = numba.cuda.threadIdx.y
+    x = numba.cuda.threadIdx.x
+    if x < size and y < size:
+        shared_a[y, x] = a[y * size + x]
+        shared_b[y, x] = b[y * size + x]
+    else:
+        shared_a[y, x] = 0
+        shared_b[y, x] = 0
+    numba.cuda.syncthreads()
+
+    if y < size and x < size:
+        temp = 0
+        for val in range(size):
+            temp += shared_a[y, val] * shared_b[val, x]
+        out[y * size + x] = temp
+
+    #raise NotImplementedError('Need to implement for Task 3.3')
 
 
 jit_mm_practice = cuda.jit()(_mm_practice)
