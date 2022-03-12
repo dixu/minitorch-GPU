@@ -260,9 +260,9 @@ if numba.cuda.is_available():
     @pytest.mark.task3_4
     def test_mul_practice6():
         "Extend to require a batch"
-        size_a = 45
-        size_b = 40
-        size_in = 33
+        size_a = 28
+        size_b = 21
+        size_in = 15
         x = [
             [[random.random() for i in range(size_in)] for j in range(size_a)]
             for _ in range(2)
