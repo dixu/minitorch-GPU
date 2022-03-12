@@ -51,6 +51,7 @@ def to_index(ordinal, shape, out_index):
 
     """
     # TODO: Implement for Task 2.1.
+    '''
     n_dim = len(shape)
     #out_index = array(shape)
     
@@ -62,6 +63,14 @@ def to_index(ordinal, shape, out_index):
         q = ordinal // s
         ordinal = ordinal % s
         out_index[i] = q
+    
+    '''
+    cur_ord = ordinal + 0
+    for i in range(len(shape) - 1, -1, -1):
+        sh = shape[i]
+        out_index[i] = int(cur_ord % sh)
+        cur_ord = cur_ord // sh
+    
     
 
 
