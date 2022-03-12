@@ -17,7 +17,7 @@ to_index = cuda.jit(device=True)(to_index)
 index_to_position = cuda.jit(device=True)(index_to_position)
 broadcast_index = cuda.jit(device=True)(broadcast_index)
 
-THREADS_PER_BLOCK = 32
+THREADS_PER_BLOCK = 64
 
 
 def tensor_map(fn):
@@ -170,7 +170,7 @@ def _sum_practice(out, a, size):
         size (int):  length of a.
 
     """
-    BLOCK_DIM = 32
+    BLOCK_DIM =64
     # TODO: Implement for Task 3.3.
 
     local_idx = numba.cuda.threadIdx.x
