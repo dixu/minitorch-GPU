@@ -457,7 +457,7 @@ def tensor_matrix_multiply(
             ]
         else:
             shared_b[y, x] = 0
-        numba.cuda.syncthreads()
+    numba.cuda.syncthreads()
 
     for val in range(BLOCK_DIM):
         temp += shared_a[y, val] * shared_b[val, x]
