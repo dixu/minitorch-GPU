@@ -460,7 +460,7 @@ def tensor_matrix_multiply(
         numba.cuda.syncthreads()
 
     for val in range(BLOCK_DIM):
-            temp += shared_a[y, val] * shared_b[val, x]
+        temp += shared_a[y, val] * shared_b[val, x]
 
     if (block_y + y) < out_shape[-2] and (block_x + x) < out_shape[-1]:
         out[
